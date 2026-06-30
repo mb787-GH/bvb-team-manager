@@ -793,8 +793,8 @@ function checkAuth() {
 // 3. In the SQL editor, run:
 //      create table bvb_data (id text primary key, payload jsonb, updated_at timestamptz default now());
 // 4. Leave SUPABASE_URL empty to run in local-only mode (data resets on refresh, no setup needed)
-const SUPABASE_URL = '';           // e.g. 'https://xxxxx.supabase.co'
-const SUPABASE_ANON_KEY = '';      // e.g. 'eyJhbGciOiJI...'
+const SUPABASE_URL = 'https://supabase.com/dashboard/project/imalilsmbiifnogrjfzt';           // e.g. 'https://xxxxx.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltYWxpbHNtYmlpZm5vZ3JqZnp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NzI1MTMsImV4cCI6MjA5ODM0ODUxM30.4yssYettJarCNbDI9G2ysCm96O9Rmn96RnPZekI-U_8';      // e.g. 'eyJhbGciOiJI...'
 const CLOUD_ROW_ID = 'bvb-team-data'; // single shared row for the whole team
 
 let _sb = null;
