@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>BvB Team Manager</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BvB Team">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ac:#FFD700;--ac2:#c8a600;--ac3:#2d2700;
+  --s1:#0f0f11;--s2:#17171a;--s3:#1e1e22;--s4:#26262b;--s5:#2f2f36;
+  --bd:#2a2a30;--bd2:#3a3a42;
+  --t1:#f4f4f5;--t2:#a1a1aa;--t3:#52525b;
+  --ok:#22c55e;--ok2:#052e16;--err:#ef4444;--err2:#2d0a0a;--inf:#60a5fa;--inf2:#0d1f3a;
+  --r:10px;--r2:7px;--r3:5px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--s1);color:var(--t1);font-size:13px;line-height:1.5}
+
+/* LAYOUT */
+.shell{display:grid;grid-template-columns:220px 1fr;height:100vh;overflow:hidden}
+.sb{background:var(--s2);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.main{display:flex;flex-direction:column;overflow:hidden}
+
+/* SIDEBAR */
+.brand{padding:14px 12px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .12s;user-select:none}
+.brand:hover{background:var(--s3)}
+.logo{width:36px;height:36px;border-radius:9px;background:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#111;flex-shrink:0;overflow:hidden;transition:background .2s}
+.logo img{width:100%;height:100%;object-fit:cover;border-radius:9px}
+.bname{font-size:13px;font-weight:500;color:var(--t1);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bsub{font-size:11px;color:var(--t3);margin-top:1px}
+nav{padding:8px;flex:1;overflow-y:auto}
+.nl{font-size:10px;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;padding:10px 8px 4px;font-weight:500}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r2);cursor:pointer;color:var(--t2);font-size:13px;border:none;background:none;width:100%;text-align:left;transition:all .1s;font-family:inherit}
+.ni i{font-size:16px;flex-shrink:0;transition:color .1s}
+.ni:hover{background:var(--s4);color:var(--t1)}
+.ni.on{background:var(--ac3);color:var(--ac);font-weight:500}
+.ni.on i{color:var(--ac)}
+.nbadge{margin-left:auto;background:var(--s4);color:var(--t3);font-size:10px;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center;font-weight:400}
+.ni.on .nbadge{background:#3a3410;color:var(--ac2)}
+.sbfoot{padding:8px;border-top:1px solid var(--bd)}
+
+/* TOPBAR */
+.topbar{background:var(--s2);border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.tbtitle{font-size:15px;font-weight:500;color:var(--t1)}
+.tbacts{display:flex;gap:7px;align-items:center;flex-shrink:0}
+
+/* CONTENT */
+.ca{flex:1;overflow-y:auto;padding:20px}
+.pg{display:none}
+.pg.on{display:block}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--r2);border:1px solid var(--bd2);background:var(--s4);color:var(--t1);font-size:12px;cursor:pointer;transition:all .12s;font-family:inherit;white-space:nowrap;font-weight:400}
+.btn:hover{border-color:var(--ac);color:var(--ac)}
+.btn.ac{background:var(--ac);color:#111;border-color:var(--ac);font-weight:500}
+.btn.ac:hover{background:#e6c200;border-color:#e6c200;color:#111}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--t2)}
+.btn.ghost:hover{background:var(--s4);border-color:var(--bd);color:var(--t1)}
+.btn.danger{background:transparent;border-color:transparent;color:#f87171}
+.btn.danger:hover{background:var(--err2);border-color:var(--err)}
+.btn.inf{background:transparent;border-color:transparent;color:var(--inf)}
+.btn.inf:hover{background:var(--inf2);border-color:var(--inf)}
+.btn.sm{padding:4px 9px;font-size:11px}
+.btn.xs{padding:3px 7px;font-size:10px}
+
+/* FORMS */
+.fl{font-size:10px;color:var(--t3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.fr{margin-bottom:10px}
+input,select,textarea{background:var(--s4);border:1px solid var(--bd2);border-radius:var(--r2);color:var(--t1);padding:7px 10px;font-size:12px;width:100%;font-family:inherit;transition:border-color .1s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac)}
+select option{background:var(--s3)}
+textarea{resize:vertical;min-height:64px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.div{height:1px;background:var(--bd);margin:14px 0}
+
+/* CARDS */
+.card{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.ch{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ct{font-size:13px;font-weight:500;color:var(--t1)}
+.cb{padding:14px 16px}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:400;line-height:1.4}
+.py{background:var(--ac3);color:var(--ac)}
+.pg2{background:var(--ok2);color:#4ade80}
+.pb{background:var(--inf2);color:var(--inf)}
+.pr{background:var(--err2);color:#f87171}
+.pgr{background:var(--s4);color:var(--t3)}
+
+/* AVATAR */
+.av{display:flex;align-items:center;justify-content:center;font-weight:500;color:var(--ac);background:var(--ac3);border:1px solid var(--bd2);border-radius:9px;flex-shrink:0}
+
+/* PLAYER GRID */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}
+.pc{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;cursor:pointer;position:relative;overflow:hidden;transition:all .14s}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--bd);transition:background .14s}
+.pc:hover{border-color:var(--ac);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.pc:hover::before,.pc.sel::before{background:var(--ac)}
+.pc.sel{border-color:var(--ac)}
+.pnum{position:absolute;top:10px;right:12px;font-size:22px;font-weight:700;color:var(--ac);opacity:.15;line-height:1}
+.pn{font-size:13px;font-weight:500;color:var(--t1);margin-bottom:2px}
+.pp{font-size:11px;color:var(--t3)}
+
+/* STAT GRID */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.sbox{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px}
+.sv{font-size:26px;font-weight:500;color:var(--ac);line-height:1}
+.sl{font-size:11px;color:var(--t3);margin-top:5px}
+
+/* BENCHMARKS */
+.br{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.br:last-child{border-bottom:none}
+.bi{width:28px;height:28px;border-radius:6px;background:var(--s4);display:flex;align-items:center;justify-content:center;color:var(--ac);font-size:14px;flex-shrink:0}
+.bname{flex:1;font-size:12px;color:var(--t2)}
+.bval{font-size:13px;font-weight:500;color:var(--ac)}
+.bunit{font-size:10px;color:var(--t3);margin-left:2px}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--s3);border-radius:var(--r2);padding:3px;margin-bottom:14px}
+.tab{flex:1;padding:5px 8px;border-radius:5px;border:none;background:transparent;color:var(--t3);font-size:11px;cursor:pointer;font-family:inherit;transition:all .1s;white-space:nowrap}
+.tab.on{background:var(--s2);color:var(--t1);border:1px solid var(--bd)}
+
+/* RATINGS */
+.sr{display:flex;gap:3px}
+.star{font-size:16px;cursor:pointer;color:var(--bd2);transition:color .1s;user-select:none}
+.star.on{color:var(--ac)}
+
+/* ACTIVITY TYPE PICKER */
+.atgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.atc{background:var(--s4);border:1px solid var(--bd);border-radius:var(--r2);padding:9px 6px;cursor:pointer;text-align:center;transition:all .1s}
+.atc:hover{border-color:var(--ac)}
+.atc.sel{border-color:var(--ac);background:var(--ac3)}
+.atc i{font-size:18px;color:var(--t3);display:block;margin-bottom:4px}
+.atc.sel i,.atc.sel span{color:var(--ac)}
+.atc span{font-size:10px;color:var(--t2);line-height:1.3;display:block}
+
+/* TRYOUTS */
+.trow{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;margin-bottom:8px;display:flex;gap:11px;align-items:flex-start;transition:border-color .12s}
+.trow:hover{border-color:var(--bd2)}
+
+/* QR */
+.qrbox{background:var(--s3);border:1px solid var(--bd);border-radius:14px;padding:22px;text-align:center;margin-bottom:16px}
+.qri{width:110px;height:110px;background:#fff;border-radius:10px;margin:0 auto 14px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+
+/* REPORTS */
+.rc{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:9px;transition:border-color .12s}
+.rc:hover{border-color:var(--bd2)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:36px 16px;color:var(--t3)}
+.empty i{font-size:30px;display:block;margin-bottom:8px;color:var(--bd2)}
+.empty p{font-size:12px;margin-top:4px}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
+.stitle{font-size:14px;font-weight:500;color:var(--t1)}
+
+/* OVERLAY + DRAWER */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;justify-content:flex-end;backdrop-filter:blur(2px)}
+.ov.open{display:flex}
+.dr{background:var(--s2);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.drh{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+.drtitle{font-size:14px;font-weight:500;color:var(--t1)}
+.drb{padding:16px;flex:1;overflow-y:auto}
+.cx{background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px;line-height:1;padding:2px;transition:color .1s}
+.cx:hover{color:var(--t1)}
+
+/* SETTINGS */
+.ssec{margin-bottom:18px}
+.slbl{font-size:10px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.07em}
+.csw{width:26px;height:26px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .12s;flex-shrink:0}
+.csw.on{border-color:var(--t1)}
+.crow{display:flex;gap:7px;flex-wrap:wrap}
+.lp{width:54px;height:54px;border-radius:12px;background:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#111;cursor:pointer;border:2px dashed var(--bd2);transition:all .12s;overflow:hidden;flex-shrink:0}
+.lp:hover{border-color:var(--ac)}
+.ail{display:flex;flex-direction:column;gap:5px}
+.ai{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s3);border:1px solid var(--bd);border-radius:var(--r2)}
+.ai .aname{flex:1;font-size:12px;color:var(--t1)}
+.ai .aunit{font-size:10px;color:var(--t3)}
+.ai .adel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:2px 3px;transition:color .1s}
+.ai .adel:hover{color:var(--err)}
+.ai .aedit{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px 3px;transition:color .1s}
+.ai .aedit:hover{color:var(--ac)}
+.ai.editing{background:var(--s4);border-color:var(--ac2)}
+.ai.editing input{background:var(--s2);border:1px solid var(--bd2);border-radius:5px;color:var(--t1);font-size:12px;padding:4px 6px}
+.ai .ai-name-input{flex:1;min-width:0}
+.ai .ai-unit-input{width:64px}
+.narow{display:flex;gap:6px;margin-top:8px}
+
+/* NOTIFICATION TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--t1);z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;max-width:280px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok i{color:var(--ok)}
+.toast.inf i{color:var(--inf)}
+
+/* SEARCH */
+.search-wrap{position:relative;flex:1;max-width:240px}
+.search-wrap i{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none}
+.search-wrap input{padding-left:30px}
+
+/* PROGRESS METER */
+.prog{height:3px;background:var(--s4);border-radius:2px;overflow:hidden;margin-top:5px}
+.prog-fill{height:100%;background:var(--ac);border-radius:2px;transition:width .3s}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--t3)}
+
+/* ── MOBILE / RESPONSIVE ──────────────────────────────────────────── */
+.bottom-nav{display:none}
+
+@media (max-width: 768px) {
+  html,body{position:fixed;width:100%;height:100%}
+  .shell{grid-template-columns:1fr;height:100%;height:100dvh}
+  .sb{display:none}
+  .main{height:100%;padding-bottom:env(safe-area-inset-bottom)}
+  .topbar{padding:10px 14px;padding-top:max(10px, env(safe-area-inset-top))}
+  .tbtitle{font-size:14px}
+  .ca{padding:14px;padding-bottom:78px}
+  .sgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .pgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .g2,.g3{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  div[style*="grid-template-columns:1.3fr 1fr"]{grid-template-columns:1fr !important}
+
+  /* Drawers become full-screen bottom sheets on mobile */
+  .ov{align-items:flex-end}
+  .dr{width:100% !important;max-width:100%;border-left:none;border-top:1px solid var(--bd);border-radius:16px 16px 0 0;max-height:92vh;animation:sheetUp .22s ease-out}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .drb{padding-bottom:max(16px, env(safe-area-inset-bottom))}
+
+  /* Bottom tab bar */
+  .bottom-nav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+    background:var(--s2);border-top:1px solid var(--bd);
+    padding:6px 4px max(6px, env(safe-area-inset-bottom));
+    justify-content:space-around;align-items:center;
+  }
+  .bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--t3);font-size:10px;font-family:inherit;cursor:pointer;flex:1;padding:4px 2px;position:relative}
+  .bn-item i{font-size:20px}
+  .bn-item.on{color:var(--ac)}
+  .bn-badge{position:absolute;top:-2px;right:18%;background:var(--err);color:#fff;font-size:8px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px;font-weight:600}
+
+  .pc{padding:11px}
+  .av{width:32px !important;height:32px !important;font-size:12px !important}
+  .pn{font-size:12px}
+  .sbox{padding:11px 12px}
+  .sv{font-size:20px}
+  .card .ch{padding:10px 12px}
+  .rc{padding:12px}
+}
+
+@media (max-width: 420px) {
+  .sgrid{grid-template-columns:1fr 1fr}
+  .pgrid{grid-template-columns:1fr 1fr}
+  .tbacts .btn span.btn-label-full{display:none}
+}
+
+/* ── LOGIN GATE ───────────────────────────────────────────────────── */
+#login-screen{
+  position:fixed;inset:0;background:var(--s1);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#login-screen.hidden{display:none}
+.login-card{background:var(--s2);border:1px solid var(--bd);border-radius:14px;padding:32px 28px;width:100%;max-width:340px;text-align:center}
+.login-logo{width:60px;height:60px;border-radius:14px;background:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#111;margin:0 auto 16px;overflow:hidden}
+.login-logo img{width:100%;height:100%;object-fit:cover}
+.login-title{font-size:17px;font-weight:500;color:var(--t1);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--t3);margin-bottom:22px}
+.login-card input{text-align:center;font-size:14px;padding:10px 12px;margin-bottom:12px}
+.login-err{font-size:12px;color:var(--err);min-height:16px;margin-bottom:8px}
+#app-shell-wrap{display:none}
+#app-shell-wrap.unlocked{display:contents}
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo" id="login-logo-el"><span id="login-logo-txt">BvB</span></div>
+    <div class="login-title" id="login-title-el">BvB Youth Soccer</div>
+    <div class="login-sub">Enter the team password to continue</div>
+    <input type="password" id="login-pw" placeholder="Password" onkeydown="if(event.key==='Enter')tryLogin()">
+    <div class="login-err" id="login-err"></div>
+    <button class="btn ac" style="width:100%;justify-content:center" onclick="tryLogin()"><i class="ti ti-lock-open"></i>Unlock</button>
+  </div>
+</div>
+
+<div id="app-shell-wrap">
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bn-item on" id="bn-dash" onclick="goMobile('dash',this)"><i class="ti ti-layout-dashboard"></i>Home</button>
+  <button class="bn-item" id="bn-roster" onclick="goMobile('roster',this)"><i class="ti ti-users"></i>Roster<span class="bn-badge" id="bnb-r" style="display:none">0</span></button>
+  <button class="bn-item" id="bn-bench" onclick="goMobile('bench',this)"><i class="ti ti-chart-bar"></i>Bench</button>
+  <button class="bn-item" id="bn-rep" onclick="goMobile('rep',this)"><i class="ti ti-file-text"></i>Reports</button>
+  <button class="bn-item" id="bn-try" onclick="goMobile('try',this)"><i class="ti ti-clipboard-list"></i>Tryouts<span class="bn-badge" id="bnb-t" style="display:none">0</span></button>
+  <button class="bn-item" id="bn-set" onclick="openDr('settings')"><i class="ti ti-settings"></i>More</button>
+</nav>
+
+<div class="shell">
+  <aside class="sb">
+    <div class="brand" onclick="openDr('settings')" title="Open Settings">
+      <div class="logo" id="logo-el">
+        <img id="logo-img" style="display:none" alt="Club logo">
+        <span id="logo-txt">BvB</span>
+      </div>
+      <div style="min-width:0">
+        <div class="bname" id="bn-el">BvB Youth Soccer</div>
+        <div class="bsub" id="bs-el">Team Management</div>
+      </div>
+      <span id="sync-indicator" style="margin-left:auto;font-size:14px;flex-shrink:0" title=""></span>
+    </div>
+    <nav>
+      <div class="nl">Main</div>
+      <button class="ni" id="ni-dash" onclick="go('dash',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+      <button class="ni on" id="ni-roster" onclick="go('roster',this)"><i class="ti ti-users"></i>Roster<span class="nbadge" id="nb-r">3</span></button>
+      <button class="ni" id="ni-bench" onclick="go('bench',this)"><i class="ti ti-chart-bar"></i>Benchmarks<span class="nbadge" id="nb-b">5</span></button>
+      <button class="ni" id="ni-rep" onclick="go('rep',this)"><i class="ti ti-file-text"></i>Reports<span class="nbadge" id="nb-rep">1</span></button>
+      <div class="nl">Recruiting</div>
+      <button class="ni" id="ni-try" onclick="go('try',this)"><i class="ti ti-clipboard-list"></i>Tryouts<span class="nbadge" id="nb-t">2</span></button>
+    </nav>
+    <div class="sbfoot">
+      <button class="ni" onclick="openDr('settings')"><i class="ti ti-settings"></i>Settings</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tbtitle" id="tb-title">Roster</div>
+      <div class="tbacts" id="tb-acts">
+        <button class="btn ac" onclick="openDr('ap')"><i class="ti ti-user-plus"></i>Add player</button>
+      </div>
+    </div>
+    <div class="ca">
+
+      <!-- DASHBOARD -->
+      <div class="pg" id="pg-dash">
+        <div class="sgrid">
+          <div class="sbox"><div class="sv" id="d-pl">3</div><div class="sl">Players on roster</div></div>
+          <div class="sbox"><div class="sv" id="d-tr">2</div><div class="sl">Tryout applicants</div></div>
+          <div class="sbox"><div class="sv" id="d-rp">1</div><div class="sl">Reports sent</div></div>
+          <div class="sbox"><div class="sv" id="d-bk">5</div><div class="sl">Benchmarks logged</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px">
+          <div>
+            <div class="card">
+              <div class="ch"><span class="ct">Recent tryout applicants</span><button class="btn sm ghost" onclick="go('try',document.getElementById('ni-try'))">View all <i class="ti ti-arrow-right"></i></button></div>
+              <div id="d-tlist" style="padding:4px 16px 8px"></div>
+            </div>
+            <div class="card">
+              <div class="ch"><span class="ct">Top benchmarks</span></div>
+              <div id="d-blist" style="padding:0 16px 4px"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="ch"><span class="ct">Quick actions</span></div>
+              <div class="cb" style="display:flex;flex-direction:column;gap:7px">
+                <button class="btn" style="justify-content:flex-start" onclick="openDr('ap')"><i class="ti ti-user-plus"></i>Add new player</button>
+                <button class="btn" style="justify-content:flex-start" onclick="openDr('ab')"><i class="ti ti-stopwatch"></i>Log a benchmark</button>
+                <button class="btn" style="justify-content:flex-start" onclick="openDr('ar')"><i class="ti ti-file-text"></i>Write a progress report</button>
+                <button class="btn" style="justify-content:flex-start" onclick="go('try',document.getElementById('ni-try'))"><i class="ti ti-qrcode"></i>View tryout QR code</button>
+                <button class="btn" style="justify-content:flex-start" onclick="openDr('settings-act')"><i class="ti ti-adjustments"></i>Manage benchmark activities</button>
+                <button class="btn" style="justify-content:flex-start" onclick="openDr('settings')"><i class="ti ti-settings"></i>App settings & branding</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:12px">
+              <div class="ch"><span class="ct">Roster snapshot</span></div>
+              <div id="d-roster-snap" style="padding:8px 16px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROSTER -->
+      <div class="pg on" id="pg-roster">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div class="search-wrap" style="flex:1;max-width:260px">
+            <i class="ti ti-search"></i>
+            <input id="roster-search" placeholder="Search players..." oninput="rRoster()">
+          </div>
+          <select id="roster-pos-filter" onchange="rRoster()" style="width:auto;font-size:12px;padding:7px 10px">
+            <option value="">All positions</option>
+            <option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option>
+          </select>
+        </div>
+        <div class="pgrid" id="pgrid"></div>
+      </div>
+
+      <!-- BENCHMARKS -->
+      <div class="pg" id="pg-bench">
+        <div class="sh">
+          <span class="stitle">Benchmarks</span>
+          <div style="display:flex;gap:7px">
+            <button class="btn sm" onclick="openDr('settings-act')"><i class="ti ti-adjustments"></i>Manage activities</button>
+            <button class="btn ac sm" onclick="openDr('ab')"><i class="ti ti-plus"></i>Log benchmark</button>
+          </div>
+        </div>
+        <div class="tabs" id="btabs"></div>
+        <div id="blist"></div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="pg" id="pg-rep">
+        <div style="background:var(--inf2);border:1px solid #1e3a5f;border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:9px;margin-bottom:14px">
+          <i class="ti ti-file-type-pdf" style="color:var(--inf);font-size:18px"></i>
+          <span style="font-size:12px;color:#93c5fd;flex:1">Each report can be exported as a professional BvB PDF. Click <strong style="color:#fff">Export PDF</strong> on any report below.</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <div class="search-wrap" style="flex:1;max-width:260px">
+            <i class="ti ti-search"></i>
+            <input id="rep-search" placeholder="Search reports..." oninput="rRep()">
+          </div>
+          <select id="rep-period-filter" onchange="rRep()" style="width:auto;font-size:12px;padding:7px 10px">
+            <option value="">All periods</option>
+            <option>Weekly</option><option>Monthly</option><option>Season Summary</option><option>Post-Game</option>
+          </select>
+        </div>
+        <div id="rlist"></div>
+      </div>
+
+      <!-- TRYOUTS -->
+      <div class="pg" id="pg-try">
+        <div class="qrbox">
+          <div class="qri"><canvas id="qrc" width="110" height="110"></canvas></div>
+          <div style="font-size:15px;font-weight:500;color:var(--ac);margin-bottom:3px" id="qr-lbl">BvB Youth Soccer — Tryout Sign-Up</div>
+          <div style="font-size:12px;color:var(--t3);margin-bottom:14px">Share this QR code — players scan it to submit their tryout application</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="btn ac sm" onclick="openDr('tryform')"><i class="ti ti-qrcode"></i>Simulate player scan</button>
+            <button class="btn sm" onclick="copyTryLink()"><i class="ti ti-copy"></i>Copy link</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:14px;font-weight:500">Applicants</span>
+            <span class="pill py" id="apbadge">2</span>
+          </div>
+          <select id="tryf" onchange="rTry()" style="width:auto;font-size:11px;padding:5px 9px">
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="declined">Declined</option>
+          </select>
+        </div>
+        <div id="trylist"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="ov" id="ov" onclick="handleOv(event)">
+
+  <!-- ADD PLAYER DRAWER -->
+  <div class="dr" id="dr-ap" style="display:none;width:340px">
+    <div class="drh"><span class="drtitle">Add player</span><button class="cx" onclick="closeDr()">×</button></div>
+    <div class="drb">
+      <div class="g2"><div class="fr"><label class="fl">First name *</label><input id="ap-fn" placeholder="First"></div><div class="fr"><label class="fl">Last name *</label><input id="ap-ln" placeholder="Last"></div></div>
+      <div class="g3"><div class="fr"><label class="fl">Jersey #</label><input id="ap-nu" type="number" placeholder="#" min="1" max="99"></div><div class="fr"><label class="fl">Age</label><input id="ap-ag" type="number" placeholder="Age"></div><div class="fr"><label class="fl">Position</label><select id="ap-po"><option value="">—</option><option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select></div></div>
+      <div class="g2"><div class="fr"><label class="fl">Parent email</label><input id="ap-em" type="email" placeholder="parent@email.com"></div><div class="fr"><label class="fl">Parent phone</label><input id="ap-ph" placeholder="(555) 000-0000"></div></div>
+      <div class="fr"><label class="fl">Notes</label><textarea id="ap-no" placeholder="Any notes about this player..."></textarea></div>
+      <div style="display:flex;gap:7px;margin-top:6px">
+        <button class="btn ac" style="flex:1;justify-content:center" onclick="addPlayer()"><i class="ti ti-check"></i>Add player</button>
+        <button class="btn ghost" onclick="closeDr()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYER DETAIL DRAWER -->
+  <div class="dr" id="dr-pd" style="display:none;width:360px">
+    <div class="drh">
+      <span class="drtitle" id="pd-title">Player</span>
+      <div style="display:flex;gap:5px;align-items:center">
+        <button class="btn sm" onclick="openEditPlayer()" title="Edit player info"><i class="ti ti-pencil"></i>Edit</button>
+        <button class="btn danger sm" onclick="rmPlayer()"><i class="ti ti-trash"></i>Remove</button>
+        <button class="cx" onclick="closeDr()">×</button>
+      </div>
+    </div>
+    <div class="drb" id="pd-body"></div>
+  </div>
+
+  <!-- EDIT PLAYER DRAWER -->
+  <div class="dr" id="dr-ep" style="display:none;width:360px">
+    <div class="drh">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn ghost sm" onclick="openDr('pd')" title="Back to profile"><i class="ti ti-arrow-left"></i></button>
+        <span class="drtitle">Edit player</span>
+      </div>
+      <button class="cx" onclick="closeDr()">×</button>
+    </div>
+    <div class="drb">
+      <div class="g2">
+        <div class="fr"><label class="fl">First name *</label><input id="ep-fn" placeholder="First"></div>
+        <div class="fr"><label class="fl">Last name</label><input id="ep-ln" placeholder="Last"></div>
+      </div>
+      <div class="g3">
+        <div class="fr"><label class="fl">Jersey #</label><input id="ep-nu" type="number" placeholder="#" min="1" max="99"></div>
+        <div class="fr"><label class="fl">Age</label><input id="ep-ag" type="number" placeholder="Age"></div>
+        <div class="fr"><label class="fl">Position</label>
+          <select id="ep-po">
+            <option value="">—</option>
+            <option>Goalkeeper</option>
+            <option>Defender</option>
+            <option>Midfielder</option>
+            <option>Forward</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="fr"><label class="fl">Parent email</label><input id="ep-em" type="email" placeholder="parent@email.com"></div>
+        <div class="fr"><label class="fl">Parent phone</label><input id="ep-ph" placeholder="(555) 000-0000"></div>
+      </div>
+      <div class="fr"><label class="fl">Notes</label><textarea id="ep-no" placeholder="Notes about this player..."></textarea></div>
+      <div class="div"></div>
+      <div style="display:flex;gap:7px;margin-top:4px">
+        <button class="btn ac" style="flex:1;justify-content:center" onclick="saveEditPlayer()"><i class="ti ti-check"></i>Save changes</button>
+        <button class="btn ghost" onclick="openDr('pd')">Cancel</button>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd2)">
+        <button class="btn danger" style="width:100%;justify-content:center" onclick="rmPlayer()"><i class="ti ti-trash"></i>Remove this player</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG BENCHMARK DRAWER -->
+  <div class="dr" id="dr-ab" style="display:none;width:360px">
+    <div class="drh"><span class="drtitle">Log benchmark</span><button class="cx" onclick="closeDr()">×</button></div>
+    <div class="drb">
+      <div class="fr"><label class="fl">Player *</label><select id="ab-pl"><option value="">Select player</option></select></div>
+      <div class="fr">
+        <label class="fl">Activity *</label>
+        <div class="atgrid" id="ab-tgrid"></div>
+      </div>
+      <div class="fr" id="ab-cust-row" style="display:none"><label class="fl">Custom activity name</label><input id="ab-cn" placeholder="e.g. Cone dribble time"></div>
+      <div class="g2"><div class="fr"><label class="fl">Result *</label><input id="ab-val" placeholder="Enter result"></div><div class="fr"><label class="fl">Unit</label><input id="ab-unit" readonly style="color:var(--t3)"></div></div>
+      <div class="fr"><label class="fl">Notes</label><input id="ab-no" placeholder="Optional notes"></div>
+      <div style="display:flex;gap:7px;margin-top:6px">
+        <button class="btn ac" style="flex:1;justify-content:center" onclick="logBench()"><i class="ti ti-check"></i>Save benchmark</button>
+        <button class="btn ghost" onclick="closeDr()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT BENCHMARK DRAWER -->
+  <div class="dr" id="dr-eb" style="display:none;width:360px">
+    <div class="drh"><span class="drtitle">Edit benchmark</span><button class="cx" onclick="closeDr()">×</button></div>
+    <div class="drb">
+      <div class="fr"><label class="fl">Player</label><input id="eb-player-display" readonly style="color:var(--t2)"></div>
+      <div class="fr"><label class="fl">Activity</label><input id="eb-act-display" readonly style="color:var(--t2)"></div>
+      <div class="fr" id="eb-cust-row" style="display:none"><label class="fl">Custom activity name</label><input id="eb-cn" placeholder="e.g. Cone dribble time"></div>
+      <div class="g2"><div class="fr"><label class="fl">Result *</label><input id="eb-val" placeholder="Enter result"></div><div class="fr"><label class="fl">Unit</label><input id="eb-unit"></div></div>
+      <div class="fr"><label class="fl">Date</label><input id="eb-dt" type="date"></div>
+      <div class="fr"><label class="fl">Notes</label><input id="eb-no" placeholder="Optional notes"></div>
+      <div style="display:flex;gap:7px;margin-top:6px">
+        <button class="btn ac" style="flex:1;justify-content:center" onclick="saveEditBench()"><i class="ti ti-check"></i>Save changes</button>
+        <button class="btn ghost" onclick="closeDr()">Cancel</button>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd2)">
+        <button class="btn danger" style="width:100%;justify-content:center" onclick="deleteBench()"><i class="ti ti-trash"></i>Delete this benchmark</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WRITE REPORT DRAWER -->
+  <div class="dr" id="dr-ar" style="display:none;width:360px">
+    <div class="drh"><span class="drtitle">Progress report</span><button class="cx" onclick="closeDr()">×</button></div>
+    <div class="drb">
+      <div class="fr"><label class="fl">Player *</label><select id="ar-pl"><option value="">Select player</option></select></div>
+      <div class="g2"><div class="fr"><label class="fl">Date</label><input id="ar-dt" type="date"></div><div class="fr"><label class="fl">Period</label><select id="ar-pe"><option>Weekly</option><option>Monthly</option><option>Season Summary</option><option>Post-Game</option></select></div></div>
+      <div class="fr">
+        <label class="fl">Technical skills</label>
+        <div class="sr" id="rat-tech" data-v="0">
+          <span class="star" onclick="setR('tech',1)">★</span><span class="star" onclick="setR('tech',2)">★</span><span class="star" onclick="setR('tech',3)">★</span><span class="star" onclick="setR('tech',4)">★</span><span class="star" onclick="setR('tech',5)">★</span>
+        </div>
+      </div>
+      <div class="fr">
+        <label class="fl">Teamwork & attitude</label>
+        <div class="sr" id="rat-team" data-v="0">
+          <span class="star" onclick="setR('team',1)">★</span><span class="star" onclick="setR('team',2)">★</span><span class="star" onclick="setR('team',3)">★</span><span class="star" onclick="setR('team',4)">★</span><span class="star" onclick="setR('team',5)">★</span>
+        </div>
+      </div>
+      <div class="fr">
+        <label class="fl">Effort & hustle</label>
+        <div class="sr" id="rat-eff" data-v="0">
+          <span class="star" onclick="setR('eff',1)">★</span><span class="star" onclick="setR('eff',2)">★</span><span class="star" onclick="setR('eff',3)">★</span><span class="star" onclick="setR('eff',4)">★</span><span class="star" onclick="setR('eff',5)">★</span>
+        </div>
+      </div>
+      <div class="fr"><label class="fl">Strengths</label><textarea id="ar-st" placeholder="What this player does well..."></textarea></div>
+      <div class="fr"><label class="fl">Areas to improve</label><textarea id="ar-im" placeholder="Key focus areas for next session..."></textarea></div>
+      <div class="fr"><label class="fl">Coach's notes</label><textarea id="ar-no" placeholder="Additional comments, context..."></textarea></div>
+      <div class="div"></div>
+      <div style="font-size:10px;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Send report to</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn ac sm" onclick="saveRep('player')"><i class="ti ti-user"></i>Player</button>
+        <button class="btn sm" onclick="saveRep('parent')"><i class="ti ti-mail"></i>Parent</button>
+        <button class="btn sm" onclick="saveRep('both')"><i class="ti ti-users"></i>Both</button>
+        <button class="btn ghost sm" onclick="saveRep('none')">Save only</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS DRAWER -->
+  <div class="dr" id="dr-settings" style="display:none;width:340px">
+    <div class="drh"><span class="drtitle">App settings</span><button class="cx" onclick="closeDr()">×</button></div>
+    <div class="drb">
+
+      <div class="ssec">
+        <div class="slbl">Club logo</div>
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:12px">
+          <div class="lp" id="slp" onclick="document.getElementById('liu').click()" title="Click to upload image">
+            <img id="slim" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:11px" alt="Logo">
+            <span id="slt">BvB</span>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--t1);margin-bottom:3px">Club logo</div>
+            <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Click logo to upload PNG or JPG</div>
+            <button class="btn xs" onclick="document.getElementById('liu').click()"><i class="ti ti-upload"></i>Upload image</button>
+          </div>
+        </div>
+        <input type="file" id="liu" accept="image/*" style="display:none" onchange="handleLogo(event)">
+        <div class="fr"><label class="fl">Logo initials (if no image)</label><input id="li-in" placeholder="BvB" maxlength="4"></div>
+        <button class="btn sm" onclick="applyInitials()"><i class="ti ti-check"></i>Apply initials</button>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="ssec">
+        <div class="slbl">Club name</div>
+        <div class="fr"><label class="fl">Display name</label><input id="cn-in" placeholder="BvB Youth Soccer"></div>
+        <div class="fr"><label class="fl">Subtitle</label><input id="cs-in" placeholder="Team Management"></div>
+        <button class="btn sm" onclick="applyName()"><i class="ti ti-check"></i>Save name</button>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="ssec">
+        <div class="slbl">Accent color</div>
+        <div class="crow" id="cswatches">
+          <div class="csw on" style="background:#FFD700" data-c="#FFD700" data-ac3="rgba(255,215,0,.12)" onclick="setAc(this)" title="BvB Gold"></div>
+          <div class="csw" style="background:#3b82f6" data-c="#3b82f6" data-ac3="rgba(59,130,246,.12)" onclick="setAc(this)" title="Blue"></div>
+          <div class="csw" style="background:#22c55e" data-c="#22c55e" data-ac3="rgba(34,197,94,.12)" onclick="setAc(this)" title="Green"></div>
+          <div class="csw" style="background:#ef4444" data-c="#ef4444" data-ac3="rgba(239,68,68,.12)" onclick="setAc(this)" title="Red"></div>
+          <div class="csw" style="background:#a855f7" data-c="#a855f7" data-ac3="rgba(168,85,247,.12)" onclick="setAc(this)" title="Purple"></div>
+          <div class="csw" style="background:#f97316" data-c="#f97316" data-ac3="rgba(249,115,22,.12)" onclick="setAc(this)" title="Orange"></div>
+          <div class="csw" style="background:#14b8a6" data-c="#14b8a6" data-ac3="rgba(20,184,166,.12)" onclick="setAc(this)" title="Teal"></div>
+        </div>
+      </div>
+
+      <div class="div"></div>
+
+      <div class="ssec" id="act-sec">
+        <div class="slbl">Benchmark activities</div>
+        <div class="ail" id="act-list"></div>
+        <div class="narow">
+          <input id="na-name" placeholder="Activity name" style="flex:1">
+          <input id="na-unit" placeholder="Unit" style="width:72px">
+          <button class="btn ac sm" onclick="addAct()" title="Add activity"><i class="ti ti-plus"></i>Add</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TRYOUT FORM DRAWER -->
+  <div class="dr" id="dr-tryform" style="display:none;width:400px">
+    <div class="drh">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:28px;height:28px;border-radius:7px;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#111;overflow:hidden" id="tf-logo-wrap">
+          <img id="tf-logo-img" style="display:none;width:100%;height:100%;object-fit:cover" alt="">
+          <span id="tf-logo-txt">BvB</span>
+        </div>
+        <span class="drtitle" id="tf-title">Tryout Application</span>
+      </div>
+      <button class="cx" onclick="closeDr()">×</button>
+    </div>
+    <div class="drb">
+      <div style="background:var(--s3);border-radius:var(--r2);padding:9px 12px;margin-bottom:14px;font-size:11px;color:var(--t2);display:flex;gap:7px;align-items:flex-start">
+        <i class="ti ti-info-circle" style="margin-top:1px;flex-shrink:0;color:var(--inf)"></i>
+        Fill out this form to register for tryouts. The coaching staff will review your application.
+      </div>
+      <div class="g2"><div class="fr"><label class="fl">First name *</label><input id="tf-fn" placeholder="First"></div><div class="fr"><label class="fl">Last name *</label><input id="tf-ln" placeholder="Last"></div></div>
+      <div class="g2"><div class="fr"><label class="fl">Age</label><input id="tf-ag" type="number" placeholder="Age"></div><div class="fr"><label class="fl">Position</label><select id="tf-po"><option value="">— Select —</option><option>Goalkeeper</option><option>Defender</option><option>Midfielder</option><option>Forward</option></select></div></div>
+      <div class="fr"><label class="fl">Parent / Guardian name</label><input id="tf-pa" placeholder="Parent or guardian name"></div>
+      <div class="g2"><div class="fr"><label class="fl">Parent email *</label><input id="tf-em" type="email" placeholder="parent@email.com"></div><div class="fr"><label class="fl">Phone number</label><input id="tf-ph" placeholder="(555) 000-0000"></div></div>
+      <div class="fr"><label class="fl">Previous experience</label><textarea id="tf-ex" placeholder="Previous teams, club history, years played..."></textarea></div>
+      <div class="fr"><label class="fl">Notes for the coach</label><textarea id="tf-no" placeholder="Injuries, availability, questions..."></textarea></div>
+      <div style="display:flex;gap:7px;margin-top:6px">
+        <button class="btn ac" style="flex:1;justify-content:center" onclick="submitTry()"><i class="ti ti-send"></i>Submit application</button>
+        <button class="btn ghost" onclick="closeDr()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT PREVIEW DRAWER -->
+  <div class="dr" id="dr-export" style="display:none;width:380px">
+    <div class="drh"><span class="drtitle"><i class="ti ti-file-type-pdf" style="color:var(--inf);margin-right:5px"></i>Export Report</span><button class="cx" onclick="closeDr()">×</button></div>
+    <div class="drb" id="export-body">
+      <div id="export-preview"></div>
+      <div style="display:flex;gap:7px;margin-top:14px">
+        <button class="btn ac" id="export-dl-btn" style="flex:1;justify-content:center" onclick="doExport()"><i class="ti ti-download"></i>Download PDF</button>
+        <button class="btn ghost" onclick="closeDr()">Cancel</button>
+      </div>
+      <div id="export-status" style="text-align:center;font-size:11px;color:var(--t3);margin-top:8px;min-height:18px"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+</div><!-- /#app-shell-wrap -->
+
+<script>
+// ── AUTH (shared team password) ─────────────────────────────────────
+// Password is stored as a SHA-256 hash so it isn't sitting in plaintext in the file.
+// Default password is "bvb2024" — change it below by hashing a new password
+// (open browser console and run: crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourpassword')).then(b=>console.log(Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')))
+const AUTH_HASH = '3072f285c85f73686432ab4e467a48dea7b03e5a02f1042a70ce3919a5e987f8'; // sha256("bvb2024")
+const AUTH_SESSION_KEY = 'bvb_auth_ok';
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function tryLogin() {
+  const pw = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-err');
+  if (!pw) { errEl.textContent = 'Enter the password'; return; }
+  const hash = await sha256(pw);
+  if (hash === AUTH_HASH) {
+    sessionStorage.setItem(AUTH_SESSION_KEY, '1');
+    unlockApp();
+  } else {
+    errEl.textContent = 'Incorrect password';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-pw').focus();
+  }
+}
+
+async function unlockApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell-wrap').classList.add('unlocked');
+  if (_cloudEnabled) {
+    showSyncStatus('saving');
+    const loaded = await loadFromCloud();
+    showSyncStatus(loaded ? 'synced' : 'error');
+    // re-render everything now that data may have changed
+    syncLoginBranding();
+    document.getElementById('bn-el').textContent = S.clubName;
+    document.getElementById('bs-el').textContent = S.clubSub;
+    rRoster(); upBadges();
+    if (S.logoUrl) {
+      ['logo-img'].forEach(id => { const el=document.getElementById(id); el.src=S.logoUrl; el.style.display='block'; });
+      document.getElementById('logo-txt').style.display = 'none';
+    } else {
+      document.getElementById('logo-txt').textContent = S.logoTxt;
+    }
+  }
+}
+
+function checkAuth() {
+  if (sessionStorage.getItem(AUTH_SESSION_KEY) === '1') {
+    unlockApp();
+  } else {
+    document.getElementById('login-pw').focus();
+  }
+}
+
+// ── CLOUD STORAGE (Supabase — free tier) ────────────────────────────
+// 1. Create a free project at https://supabase.com
+// 2. Go to Project Settings → API and copy your "Project URL" and "anon public" key below
+// 3. In the SQL editor, run:
+//      create table bvb_data (id text primary key, payload jsonb, updated_at timestamptz default now());
+// 4. Leave SUPABASE_URL empty to run in local-only mode (data resets on refresh, no setup needed)
+const SUPABASE_URL = '';           // e.g. 'https://xxxxx.supabase.co'
+const SUPABASE_ANON_KEY = '';      // e.g. 'eyJhbGciOiJI...'
+const CLOUD_ROW_ID = 'bvb-team-data'; // single shared row for the whole team
+
+let _sb = null;
+let _cloudEnabled = false;
+let _saveTimer = null;
+
+function initCloud() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || typeof window.supabase === 'undefined') {
+    _cloudEnabled = false;
+    return;
+  }
+  try {
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    _cloudEnabled = true;
+  } catch (e) {
+    _cloudEnabled = false;
+  }
+}
+
+async function loadFromCloud() {
+  if (!_cloudEnabled) return false;
+  try {
+    const { data, error } = await _sb.from('bvb_data').select('payload').eq('id', CLOUD_ROW_ID).single();
+    if (error || !data) return false;
+    const remote = data.payload;
+    if (remote && typeof remote === 'object') {
+      Object.assign(S, remote);
+      return true;
+    }
+  } catch (e) { /* ignore, fall back to local defaults */ }
+  return false;
+}
+
+function saveToCloud() {
+  if (!_cloudEnabled) return;
+  // debounce rapid successive saves (e.g. typing)
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try {
+      const snapshot = {
+        players: S.players, acts: S.acts, bench: S.bench, reps: S.reps, tries: S.tries,
+        nid: S.nid, sentCt: S.sentCt, clubName: S.clubName, clubSub: S.clubSub,
+        logoTxt: S.logoTxt, logoUrl: S.logoUrl, accent: S.accent
+      };
+      await _sb.from('bvb_data').upsert({ id: CLOUD_ROW_ID, payload: snapshot, updated_at: new Date().toISOString() });
+      showSyncStatus('synced');
+    } catch (e) {
+      showSyncStatus('error');
+    }
+  }, 600);
+}
+
+function showSyncStatus(state) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (state === 'synced') { el.innerHTML = '<i class="ti ti-cloud-check" style="color:var(--ok)"></i>'; el.title = 'Saved to cloud'; }
+  else if (state === 'saving') { el.innerHTML = '<i class="ti ti-cloud-upload" style="color:var(--ac)"></i>'; el.title = 'Saving…'; }
+  else if (state === 'error') { el.innerHTML = '<i class="ti ti-cloud-off" style="color:var(--err)"></i>'; el.title = 'Could not save to cloud'; }
+  else { el.innerHTML = ''; el.title = ''; }
+}
+
+// ── STATE ────────────────────────────────────────────────────────────
+let S = {
+  players: [
+    {id:1,fn:'Marcus',ln:'Weber',nu:10,ag:14,po:'Midfielder',em:'weber.family@email.com',ph:'(555) 123-4567',no:'Strong on the ball, natural leader'},
+    {id:2,fn:'Leila',ln:'Santos',nu:7,ag:13,po:'Forward',em:'santos.mom@email.com',ph:'(555) 987-6543',no:'Fast runner, great instincts'},
+    {id:3,fn:'Kai',ln:'Müller',nu:1,ag:14,po:'Goalkeeper',em:'muller@email.com',ph:'(555) 555-0101',no:'Excellent reflexes, vocal leader'}
+  ],
+  acts: [
+    {id:'jug',nm:'Juggling',ic:'ti-ball-football',un:'touches'},
+    {id:'mile',nm:'Mile run',ic:'ti-run',un:'mm:ss'},
+    {id:'dash',nm:'40-yard dash',ic:'ti-bolt',un:'seconds'},
+    {id:'pen',nm:'Penalty kicks',ic:'ti-target',un:'/ 10'},
+    {id:'pass',nm:'Passing accuracy',ic:'ti-arrow-right',un:'%'},
+    {id:'cust',nm:'Custom',ic:'ti-plus',un:''}
+  ],
+  bench: [
+    {id:1,pid:1,aid:'jug',val:'42',unit:'touches',no:'Personal best',dt:'2025-01-15'},
+    {id:2,pid:2,aid:'mile',val:'6:45',unit:'mm:ss',no:'',dt:'2025-01-15'},
+    {id:3,pid:1,aid:'dash',val:'5.2',unit:'seconds',no:'Team best',dt:'2025-01-16'},
+    {id:4,pid:3,aid:'dash',val:'5.8',unit:'seconds',no:'',dt:'2025-01-16'},
+    {id:5,pid:1,aid:'pen',val:'8',unit:'/ 10',no:'',dt:'2025-01-12'}
+  ],
+  reps: [
+    {id:1,pid:2,pname:'Leila Santos',dt:'2025-01-14',pe:'Weekly',tech:4,team:5,eff:5,
+     st:'Excellent positioning and first touch. Reads the game brilliantly for her age.',
+     im:'Work on weak-foot crossing. Track back more on defensive transitions.',
+     no:'Outstanding week — one of the best performers in training.',to:'parent'}
+  ],
+  tries: [
+    {id:1,fn:'Jordan',ln:'Park',ag:13,po:'Midfielder',pa:'Kim Park',em:'kim.park@email.com',ph:'(555) 777-3321',ex:'2 years recreational soccer',no:'',status:'pending',dt:'2025-01-18'},
+    {id:2,fn:'Alex',ln:'Rivera',ag:14,po:'Defender',pa:'Maria Rivera',em:'m.rivera@email.com',ph:'(555) 444-2211',ex:'Club team U13, played 3 seasons',no:'Strong tackler',status:'approved',dt:'2025-01-17'}
+  ],
+  nid:30, sel:null, selAct:null, sentCt:1,
+  clubName:'BvB Youth Soccer', clubSub:'Team Management', logoTxt:'BvB', logoUrl:null,
+  accent:'#FFD700', bfilter:'all', prefill:null, exportId:null
+};
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+const ini = p => (p.fn[0] + (p.ln[0]||'')).toUpperCase();
+const today = () => new Date().toISOString().split('T')[0];
+const stars = (v,t=5) => '★'.repeat(v) + '☆'.repeat(t-v);
+const avg = r => ((r.tech+r.team+r.eff)/3).toFixed(1);
+
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  const icon = el.querySelector('i');
+  el.className = 'toast ' + type;
+  icon.className = 'ti ' + (type==='ok'?'ti-check':type==='inf'?'ti-info-circle':'ti-alert-circle');
+  document.getElementById('toast-msg').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────
+function go(id, btn) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  if (btn) btn.classList.add('on');
+  const titles = {dash:'Dashboard',roster:'Roster',bench:'Benchmarks',rep:'Reports',try:'Tryouts'};
+  document.getElementById('tb-title').textContent = titles[id] || '';
+  const acts = document.getElementById('tb-acts');
+  acts.innerHTML = '';
+  if (id==='roster') acts.innerHTML = `<button class="btn ac" onclick="openDr('ap')"><i class="ti ti-user-plus"></i>Add player</button>`;
+  else if (id==='bench') acts.innerHTML = `<button class="btn sm" onclick="openDr('settings-act')"><i class="ti ti-adjustments"></i>Manage activities</button><button class="btn ac sm" onclick="openDr('ab')"><i class="ti ti-plus"></i>Log benchmark</button>`;
+  else if (id==='rep') acts.innerHTML = `<button class="btn ac" onclick="openDr('ar')"><i class="ti ti-plus"></i>New report</button>`;
+  else if (id==='try') acts.innerHTML = `<button class="btn ac sm" onclick="openDr('tryform')"><i class="ti ti-qrcode"></i>Simulate scan</button>`;
+  if (id==='dash') rDash();
+  else if (id==='roster') rRoster();
+  else if (id==='bench') { buildBTabs(); rBench(); }
+  else if (id==='rep') rRep();
+  else if (id==='try') rTry();
+}
+
+function goMobile(id, btn) {
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  go(id, document.getElementById('ni-' + id));
+}
+
+function upBadges() {
+  document.getElementById('nb-r').textContent = S.players.length;
+  document.getElementById('nb-b').textContent = S.bench.length;
+  document.getElementById('nb-rep').textContent = S.reps.length;
+  document.getElementById('nb-t').textContent = S.tries.length;
+  document.getElementById('d-pl').textContent = S.players.length;
+  document.getElementById('d-tr').textContent = S.tries.length;
+  document.getElementById('d-rp').textContent = S.sentCt;
+  document.getElementById('d-bk').textContent = S.bench.length;
+  document.getElementById('apbadge').textContent = S.tries.length;
+  // mobile bottom nav badges
+  const bnbR = document.getElementById('bnb-r');
+  const bnbT = document.getElementById('bnb-t');
+  if (bnbR) { bnbR.textContent = S.players.length; bnbR.style.display = S.players.length ? 'flex' : 'none'; }
+  if (bnbT) { bnbT.textContent = S.tries.length; bnbT.style.display = S.tries.length ? 'flex' : 'none'; }
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────
+function rDash() {
+  upBadges();
+  // Tryout list
+  const tl = document.getElementById('d-tlist');
+  if (!S.tries.length) {
+    tl.innerHTML = '<div class="empty" style="padding:14px"><i class="ti ti-clipboard-list"></i><p>No applicants yet</p></div>';
+  } else {
+    tl.innerHTML = S.tries.slice(0,4).map(t => `
+      <div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bd)">
+        <div class="av" style="width:28px;height:28px;font-size:10px">${t.fn[0]}${t.ln[0]}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.fn} ${t.ln}</div>
+          <div style="font-size:10px;color:var(--t3)">${t.po||'—'} · Age ${t.ag||'?'}</div>
+        </div>
+        <span class="pill ${t.status==='approved'?'pg2':t.status==='declined'?'pr':'py'}">${t.status}</span>
+      </div>`).join('');
+  }
+  // Top benchmarks
+  const bl = document.getElementById('d-blist');
+  const recent = S.bench.slice(-4).reverse();
+  if (!recent.length) {
+    bl.innerHTML = '<div class="empty" style="padding:14px"><i class="ti ti-chart-bar"></i><p>No benchmarks yet</p></div>';
+  } else {
+    bl.innerHTML = recent.map(b => {
+      const a = S.acts.find(x=>x.id===b.aid)||{ic:'ti-chart-bar',nm:b.aid};
+      const p = S.players.find(x=>x.id===b.pid)||{fn:'?',ln:''};
+      return `<div class="br">
+        <div class="bi"><i class="ti ${a.ic}"></i></div>
+        <span class="bname">${p.fn} ${p.ln} — ${a.nm}</span>
+        <span class="bval">${b.val}<span class="bunit"> ${b.unit}</span></span>
+      </div>`;
+    }).join('');
+  }
+  // Roster snap
+  const rs = document.getElementById('d-roster-snap');
+  if (!S.players.length) {
+    rs.innerHTML = '<div style="font-size:11px;color:var(--t3);padding:6px 0">No players on roster</div>';
+  } else {
+    rs.innerHTML = S.players.slice(0,5).map(p => `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd)">
+        <div class="av" style="width:26px;height:26px;font-size:10px">${ini(p)}</div>
+        <div style="flex:1"><div style="font-size:12px">${p.fn} ${p.ln}</div></div>
+        <span class="pill pgr">${p.po||'—'}</span>
+        <span style="font-size:11px;color:var(--ac)">#${p.nu||'—'}</span>
+      </div>`).join('') + (S.players.length > 5 ? `<div style="font-size:11px;color:var(--t3);padding:8px 0 2px">+${S.players.length-5} more players</div>` : '');
+  }
+}
+
+// ── ROSTER ───────────────────────────────────────────────────────────
+function rRoster() {
+  const g = document.getElementById('pgrid');
+  const q = (document.getElementById('roster-search')||{}).value?.toLowerCase()||'';
+  const pf = (document.getElementById('roster-pos-filter')||{}).value||'';
+  let list = S.players.filter(p =>
+    (!q || (p.fn+' '+p.ln).toLowerCase().includes(q)) &&
+    (!pf || p.po===pf)
+  );
+  if (!list.length) {
+    g.innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="ti ti-users"></i><p>${q||pf?'No players match your filter':'Add your first player to get started'}</p></div>`;
+    return;
+  }
+  g.innerHTML = list.map(p => `
+    <div class="pc" onclick="openPD(${p.id})">
+      <div class="pnum">#${p.nu||'—'}</div>
+      <div class="av" style="width:38px;height:38px;font-size:14px;margin-bottom:9px">${ini(p)}</div>
+      <div class="pn">${p.fn} ${p.ln}</div>
+      <div class="pp">${p.po||'—'} · Age ${p.ag||'?'}</div>
+      <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+        ${S.bench.filter(b=>b.pid===p.id).length ? `<span class="pill py">${S.bench.filter(b=>b.pid===p.id).length} bench</span>` : ''}
+        ${S.reps.filter(r=>r.pid===p.id).length ? `<span class="pill pb">${S.reps.filter(r=>r.pid===p.id).length} report</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ── PLAYER DETAIL ────────────────────────────────────────────────────
+function openPD(id) {
+  S.sel = id;
+  const p = S.players.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById('pd-title').textContent = `${p.fn} ${p.ln}`;
+  const benches = S.bench.filter(b=>b.pid===id);
+  const reps = S.reps.filter(r=>r.pid===id);
+  let h = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--bd)">
+      <div class="av" style="width:48px;height:48px;font-size:17px">${ini(p)}</div>
+      <div>
+        <div style="font-size:15px;font-weight:500">${p.fn} ${p.ln} <span style="color:var(--ac)">#${p.nu||'—'}</span></div>
+        <div style="font-size:11px;color:var(--t3)">${p.po||'—'} · Age ${p.ag||'?'}</div>
+        ${p.em?`<div style="font-size:11px;color:var(--t3);margin-top:2px"><i class="ti ti-mail" style="font-size:11px"></i> ${p.em}</div>`:''}
+        ${p.ph?`<div style="font-size:11px;color:var(--t3)"><i class="ti ti-phone" style="font-size:11px"></i> ${p.ph}</div>`:''}
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="btn sm" onclick="openEditPlayer()"><i class="ti ti-pencil"></i>Edit info</button>
+      <button class="btn ac sm" onclick="closeDr();S.prefill=S.sel;openDr('ab')"><i class="ti ti-plus"></i>Log benchmark</button>
+      <button class="btn sm" onclick="closeDr();S.prefill=S.sel;openDr('ar')"><i class="ti ti-file-text"></i>Write report</button>
+    </div>`;
+  if (p.no) h += `<div style="background:var(--s3);border-radius:var(--r2);padding:8px 10px;font-size:11px;color:var(--t2);margin-bottom:14px;border-left:2px solid var(--ac)">${p.no}</div>`;
+  h += `<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:500">Benchmarks <span style="color:var(--ac)">${benches.length}</span></div>`;
+  if (benches.length) {
+    h += benches.map(b => {
+      const a = S.acts.find(x=>x.id===b.aid)||{ic:'ti-chart-bar',nm:b.aid};
+      return `<div class="br"><div class="bi"><i class="ti ${a.ic}"></i></div><span class="bname">${a.nm}${b.custNm?' — '+b.custNm:''}</span><span class="bval">${b.val}<span class="bunit"> ${b.unit}</span></span><span style="font-size:10px;color:var(--t3)">${b.dt}</span><button class="btn ghost xs" onclick="openEditBench(${b.id})" title="Edit"><i class="ti ti-pencil"></i></button></div>`;
+    }).join('');
+  } else {
+    h += '<div style="font-size:11px;color:var(--t3);padding:6px 0 10px">No benchmarks logged yet</div>';
+  }
+  h += `<div class="div"></div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:500">Reports <span style="color:var(--ac)">${reps.length}</span></div>`;
+  if (reps.length) {
+    h += reps.map(r => `
+      <div style="background:var(--s3);border:1px solid var(--bd);border-radius:var(--r2);padding:10px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="pill py">${r.pe}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:var(--t3)">${r.dt}</span>
+            <span style="font-size:14px;font-weight:500;color:var(--ac)">${avg(r)}</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--t2);margin-bottom:7px">${r.st||'—'}</div>
+        <button class="btn inf xs" onclick="closeDr();openExport(${r.id})"><i class="ti ti-file-type-pdf"></i>Export PDF</button>
+      </div>`).join('');
+  } else {
+    h += '<div style="font-size:11px;color:var(--t3);padding:6px 0">No reports written yet</div>';
+  }
+  document.getElementById('pd-body').innerHTML = h;
+  openDr('pd');
+}
+
+// ── DRAWER CONTROL ───────────────────────────────────────────────────
+function openDr(id) {
+  const isSettings = id==='settings' || id==='settings-act';
+  const map = {ap:'dr-ap',pd:'dr-pd',ep:'dr-ep',ab:'dr-ab',eb:'dr-eb',ar:'dr-ar',settings:'dr-settings','settings-act':'dr-settings',tryform:'dr-tryform',export:'dr-export'};
+  const drId = map[id] || 'dr-' + id;
+  document.querySelectorAll('.dr').forEach(d => d.style.display='none');
+  const dr = document.getElementById(drId);
+  if (!dr) return;
+  dr.style.display = 'flex';
+  dr.style.flexDirection = 'column';
+  document.getElementById('ov').classList.add('open');
+
+  if (id==='ab') { popSels(); buildATGrid(); if (S.prefill) { document.getElementById('ab-pl').value = S.prefill; } document.getElementById('ab-val').value=''; document.getElementById('ab-no').value=''; }
+  if (id==='ar') { popSels(); ['tech','team','eff'].forEach(r=>setR(r,0)); ['ar-st','ar-im','ar-no'].forEach(i=>document.getElementById(i).value=''); document.getElementById('ar-dt').value=today(); if (S.prefill) document.getElementById('ar-pl').value = S.prefill; }
+  if (id==='ap') { ['ap-fn','ap-ln','ap-nu','ap-ag','ap-em','ap-ph','ap-no'].forEach(i=>{const e=document.getElementById(i);if(e)e.value=''}); document.getElementById('ap-po').value=''; }
+  if (isSettings) {
+    document.getElementById('cn-in').value = S.clubName;
+    document.getElementById('cs-in').value = S.clubSub;
+    document.getElementById('li-in').value = S.logoTxt;
+    rActList();
+    if (id==='settings-act') setTimeout(()=>document.getElementById('act-sec').scrollIntoView({behavior:'smooth'}),80);
+  }
+  if (id==='tryform') {
+    document.getElementById('tf-logo-txt').textContent = S.logoTxt;
+    document.getElementById('tf-title').textContent = `${S.clubName} — Tryout`;
+    if (S.logoUrl) { document.getElementById('tf-logo-img').src=S.logoUrl; document.getElementById('tf-logo-img').style.display='block'; document.getElementById('tf-logo-txt').style.display='none'; }
+    else { document.getElementById('tf-logo-img').style.display='none'; document.getElementById('tf-logo-txt').style.display=''; }
+    ['tf-fn','tf-ln','tf-ag','tf-pa','tf-em','tf-ph','tf-ex','tf-no'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('tf-po').value='';
+  }
+}
+
+function closeDr() {
+  document.getElementById('ov').classList.remove('open');
+  document.querySelectorAll('.dr').forEach(d => d.style.display='none');
+  S.prefill = null; S.selAct = null; S.editingActId = null; S.editBenchId = null;
+}
+
+function handleOv(e) { if (e.target===document.getElementById('ov')) closeDr(); }
+
+// ── BENCHMARK ────────────────────────────────────────────────────────
+function popSels() {
+  ['ab-pl','ar-pl'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    el.innerHTML = '<option value="">Select player</option>' + S.players.map(p=>`<option value="${p.id}">${p.fn} ${p.ln} #${p.nu||'—'}</option>`).join('');
+  });
+}
+
+function buildATGrid() {
+  S.selAct = null;
+  document.getElementById('ab-tgrid').innerHTML = S.acts.map(a => `
+    <div class="atc" id="atc-${a.id}" onclick="pickAct('${a.id}')">
+      <i class="ti ${a.ic}"></i><span>${a.nm}</span>
+    </div>`).join('');
+  document.getElementById('ab-unit').value = '';
+  document.getElementById('ab-cust-row').style.display = 'none';
+}
+
+function pickAct(id) {
+  S.selAct = id;
+  document.querySelectorAll('.atc').forEach(c => c.classList.remove('sel'));
+  document.getElementById('atc-'+id).classList.add('sel');
+  const a = S.acts.find(x=>x.id===id);
+  document.getElementById('ab-unit').value = a ? a.un : '';
+  document.getElementById('ab-cust-row').style.display = id==='cust' ? 'block' : 'none';
+}
+
+function logBench() {
+  const pid = parseInt(document.getElementById('ab-pl').value);
+  if (!pid || !S.selAct) { toast('Select a player and activity','err'); return; }
+  const val = document.getElementById('ab-val').value.trim();
+  if (!val) { toast('Enter a result value','err'); return; }
+  S.bench.push({
+    id: S.nid++, pid, aid: S.selAct,
+    custNm: S.selAct==='cust' ? document.getElementById('ab-cn').value : '',
+    val, unit: document.getElementById('ab-unit').value,
+    no: document.getElementById('ab-no').value, dt: today()
+  });
+  closeDr(); upBadges(); buildBTabs(); rBench();
+  saveToCloud();
+  toast('Benchmark saved!');
+}
+
+// ── EDIT / DELETE BENCHMARK ──────────────────────────────────────────
+function openEditBench(benchId) {
+  const b = S.bench.find(x=>x.id===benchId);
+  if (!b) return;
+  const p = S.players.find(x=>x.id===b.pid);
+  const a = S.acts.find(x=>x.id===b.aid) || {nm:b.aid, un:b.unit};
+  S.editBenchId = benchId;
+  document.getElementById('eb-player-display').value = p ? `${p.fn} ${p.ln} #${p.nu||'—'}` : 'Unknown player';
+  document.getElementById('eb-act-display').value = a.nm + (b.custNm ? ' — ' + b.custNm : '');
+  document.getElementById('eb-cust-row').style.display = b.aid==='cust' ? 'block' : 'none';
+  document.getElementById('eb-cn').value = b.custNm || '';
+  document.getElementById('eb-val').value = b.val;
+  document.getElementById('eb-unit').value = b.unit;
+  document.getElementById('eb-dt').value = b.dt;
+  document.getElementById('eb-no').value = b.no || '';
+  openDr('eb');
+}
+
+function saveEditBench() {
+  const b = S.bench.find(x=>x.id===S.editBenchId);
+  if (!b) return;
+  const val = document.getElementById('eb-val').value.trim();
+  if (!val) { toast('Enter a result value','err'); return; }
+  b.val = val;
+  b.unit = document.getElementById('eb-unit').value.trim();
+  b.dt = document.getElementById('eb-dt').value || b.dt;
+  b.no = document.getElementById('eb-no').value;
+  if (b.aid === 'cust') b.custNm = document.getElementById('eb-cn').value;
+  closeDr(); upBadges(); buildBTabs(); rBench();
+  // refresh player detail view if it was open for this player
+  if (S.sel === b.pid) openPD(b.pid);
+  saveToCloud();
+  toast('Benchmark updated!');
+}
+
+function deleteBench() {
+  const b = S.bench.find(x=>x.id===S.editBenchId);
+  if (!b) return;
+  if (!confirm('Delete this benchmark entry? This cannot be undone.')) return;
+  const pid = b.pid;
+  S.bench = S.bench.filter(x=>x.id!==S.editBenchId);
+  closeDr(); upBadges(); buildBTabs(); rBench();
+  if (S.sel === pid) openPD(pid);
+  saveToCloud();
+  toast('Benchmark deleted');
+}
+
+let _bf = 'all';
+function buildBTabs() {
+  const usedIds = new Set(S.bench.map(b=>b.aid));
+  const tabs = [{id:'all',nm:'All'}, ...S.acts.filter(a=>usedIds.has(a.id))];
+  if (!tabs.find(t=>t.id===_bf)) _bf='all';
+  document.getElementById('btabs').innerHTML = tabs.map(t =>
+    `<button class="tab${t.id===_bf?' on':''}" onclick="fBench('${t.id}',this)">${t.nm}</button>`
+  ).join('');
+}
+
+function fBench(id, btn) {
+  _bf = id;
+  document.querySelectorAll('#btabs .tab').forEach(t=>t.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  rBench();
+}
+
+function rBench() {
+  const el = document.getElementById('blist');
+  const list = _bf==='all' ? S.bench : S.bench.filter(b=>b.aid===_bf);
+  if (!list.length) { el.innerHTML='<div class="empty"><i class="ti ti-chart-bar"></i><p>No benchmarks logged yet</p></div>'; return; }
+  const byP = {};
+  S.players.forEach(p => { byP[p.id] = {p, entries:[]}; });
+  list.forEach(b => { if (byP[b.pid]) byP[b.pid].entries.push(b); });
+  el.innerHTML = Object.values(byP).filter(g=>g.entries.length).map(g => `
+    <div class="card">
+      <div class="ch">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="av" style="width:28px;height:28px;font-size:10px">${ini(g.p)}</div>
+          <span class="ct">${g.p.fn} ${g.p.ln}</span>
+          <span class="pill pgr">${g.p.po||'—'} · #${g.p.nu||'—'}</span>
+        </div>
+        <button class="btn sm" onclick="S.prefill=${g.p.id};openDr('ab')"><i class="ti ti-plus"></i>Add</button>
+      </div>
+      <div style="padding:4px 16px 8px">
+        ${g.entries.map(b => {
+          const a = S.acts.find(x=>x.id===b.aid)||{ic:'ti-chart-bar',nm:b.aid};
+          return `<div class="br">
+            <div class="bi"><i class="ti ${a.ic}"></i></div>
+            <span class="bname">${a.nm}${b.custNm?' — '+b.custNm:''}</span>
+            ${b.no ? `<span style="font-size:10px;color:var(--t3);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.no}</span>` : ''}
+            <span class="bval">${b.val}<span class="bunit"> ${b.unit}</span></span>
+            <span style="font-size:10px;color:var(--t3)">${b.dt}</span>
+            <button class="btn ghost xs" onclick="openEditBench(${b.id})" title="Edit"><i class="ti ti-pencil"></i></button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ── REPORTS ──────────────────────────────────────────────────────────
+function setR(type, val) {
+  document.getElementById('rat-'+type).setAttribute('data-v', val);
+  document.querySelectorAll('#rat-'+type+' .star').forEach((s,i) => s.classList.toggle('on', i<val));
+}
+
+function saveRep(to) {
+  const pid = parseInt(document.getElementById('ar-pl').value);
+  if (!pid) { toast('Select a player first','err'); return; }
+  const p = S.players.find(x=>x.id===pid);
+  S.reps.push({
+    id: S.nid++, pid, pname: `${p.fn} ${p.ln}`,
+    dt: document.getElementById('ar-dt').value,
+    pe: document.getElementById('ar-pe').value,
+    tech: parseInt(document.getElementById('rat-tech').getAttribute('data-v'))||0,
+    team: parseInt(document.getElementById('rat-team').getAttribute('data-v'))||0,
+    eff: parseInt(document.getElementById('rat-eff').getAttribute('data-v'))||0,
+    st: document.getElementById('ar-st').value,
+    im: document.getElementById('ar-im').value,
+    no: document.getElementById('ar-no').value, to
+  });
+  if (to !== 'none') S.sentCt++;
+  closeDr(); upBadges(); rRep();
+  saveToCloud();
+  const dest = to==='both'?'player and parent':to==='none'?'(not sent)':to;
+  toast(to==='none' ? 'Report saved' : `Report sent to ${dest}`);
+}
+
+function rRep() {
+  const el = document.getElementById('rlist');
+  const q = (document.getElementById('rep-search')||{}).value?.toLowerCase()||'';
+  const pf = (document.getElementById('rep-period-filter')||{}).value||'';
+  let list = [...S.reps].reverse().filter(r =>
+    (!q || r.pname.toLowerCase().includes(q)) &&
+    (!pf || r.pe===pf)
+  );
+  if (!list.length) { el.innerHTML='<div class="empty"><i class="ti ti-file-text"></i><p>No reports yet — write one from a player\'s profile</p></div>'; return; }
+  const sc = s => s==='none'?'pgr':s==='both'?'pg2':'pb';
+  el.innerHTML = list.map(r => `
+    <div class="rc">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px">
+        <div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:5px">${r.pname}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+            <span class="pill ${sc(r.to)}">${r.to==='none'?'Saved':'Sent to '+r.to}</span>
+            <span class="pill py">${r.pe}</span>
+            <span style="font-size:10px;color:var(--t3)">${r.dt}</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:22px;font-weight:500;color:var(--ac);line-height:1">${avg(r)}</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:2px">avg / 5</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--t3)">Technical <span style="color:var(--ac)">${stars(r.tech)}</span></span>
+        <span style="font-size:11px;color:var(--t3)">Teamwork <span style="color:var(--ac)">${stars(r.team)}</span></span>
+        <span style="font-size:11px;color:var(--t3)">Effort <span style="color:var(--ac)">${stars(r.eff)}</span></span>
+      </div>
+      ${r.st?`<div style="font-size:12px;color:var(--t2);margin-bottom:3px"><span style="color:var(--ok);font-size:10px;margin-right:3px">✓</span>${r.st}</div>`:''}
+      ${r.im?`<div style="font-size:12px;color:var(--t2);margin-bottom:3px"><span style="color:var(--err);font-size:10px;margin-right:3px">↑</span>${r.im}</div>`:''}
+      ${r.no?`<div style="font-size:11px;color:var(--t3);margin-top:4px;padding-top:8px;border-top:1px solid var(--bd);font-style:italic">${r.no}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn inf sm" onclick="openExport(${r.id})"><i class="ti ti-file-type-pdf"></i>Export PDF</button>
+        <button class="btn ghost sm" onclick="resend(${r.id},'player')"><i class="ti ti-user"></i>Send to player</button>
+        <button class="btn ghost sm" onclick="resend(${r.id},'parent')"><i class="ti ti-mail"></i>Send to parent</button>
+      </div>
+    </div>`).join('');
+}
+
+function resend(id, to) {
+  const r = S.reps.find(x=>x.id===id);
+  const p = S.players.find(x=>x.id===r.pid);
+  S.sentCt++; upBadges();
+  toast(`Report re-sent to ${to} — ${p?p.em:'(no email)'}`);
+}
+
+// ── EXPORT ───────────────────────────────────────────────────────────
+function openExport(id) {
+  S.exportId = id;
+  const r = S.reps.find(x=>x.id===id);
+  const p = S.players.find(x=>x.id===r.pid)||{};
+  const bench = S.bench.filter(b=>b.pid===r.pid);
+  const overall = avg(r);
+
+  function ratingBar(val) {
+    let b = '<div style="display:flex;gap:2px;margin-top:3px">';
+    for (let i=0; i<5; i++) b += `<div style="flex:1;height:4px;border-radius:2px;background:${i<val?'var(--ac)':'var(--s4)'}"></div>`;
+    return b + '</div>';
+  }
+
+  const bmTypes = {jug:'Juggling',mile:'Mile Run',dash:'40-Yard Dash',pen:'Penalty Kicks',pass:'Passing Accuracy',cust:'Custom'};
+
+  document.getElementById('export-preview').innerHTML = `
+    <div style="background:var(--s3);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:14px">
+      <div style="background:#111;border-bottom:3px solid var(--ac);padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <div style="width:34px;height:34px;border-radius:9px;background:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#111;flex-shrink:0">${S.logoTxt}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500;color:#fff">${r.pname}</div>
+          <div style="font-size:11px;color:#888">${r.pe} Report · ${p.po||'—'} · #${p.nu||'—'} · Age ${p.ag||'?'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:10px;color:#666">Date</div>
+          <div style="font-size:12px;color:var(--ac)">${r.dt}</div>
+        </div>
+      </div>
+      <div style="padding:14px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          ${[['Technical',r.tech],['Teamwork',r.team],['Effort',r.eff],['Overall',overall]].map(([lbl,val])=>`
+            <div style="background:#111;border-radius:7px;padding:9px;text-align:center">
+              <div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${lbl}</div>
+              <div style="font-size:18px;font-weight:500;color:var(--ac)">${val}</div>
+              ${ratingBar(Math.round(val))}
+            </div>`).join('')}
+        </div>
+        ${r.st?`<div style="background:#0a2518;border-radius:7px;padding:9px;margin-bottom:8px"><div style="font-size:9px;color:var(--ok);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">✓ Strengths</div><div style="font-size:11px;color:#ccc">${r.st}</div></div>`:''}
+        ${r.im?`<div style="background:var(--err2);border-radius:7px;padding:9px;margin-bottom:8px"><div style="font-size:9px;color:var(--err);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">↑ Areas to Improve</div><div style="font-size:11px;color:#ccc">${r.im}</div></div>`:''}
+        ${r.no?`<div style="border-left:2px solid var(--ac);padding:8px 10px;background:#1a1a00;border-radius:4px;margin-bottom:8px"><div style="font-size:11px;color:#ccc;font-style:italic">${r.no}</div></div>`:''}
+        ${bench.length?`
+          <div style="margin-top:10px">
+            <div style="font-size:9px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Benchmark Results</div>
+            ${bench.map(b=>`<div style="display:flex;align-items:center;padding:5px 0;border-bottom:1px solid #222;font-size:11px">
+              <span style="flex:1;color:#aaa">${bmTypes[b.aid]||b.aid}</span>
+              <span style="color:var(--ac);font-weight:500">${b.val}</span>
+              <span style="color:#555;margin-left:3px">${b.unit}</span>
+            </div>`).join('')}
+          </div>`:''}
+        ${p.em?`<div style="margin-top:10px;font-size:10px;color:#555">Contact: ${p.em}${p.ph?' · '+p.ph:''}</div>`:''}
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--t3);text-align:center">Preview of the exported PDF layout</div>`;
+
+  document.getElementById('export-status').textContent = '';
+  document.getElementById('export-dl-btn').disabled = false;
+  openDr('export');
+}
+
+function doExport() {
+  const r = S.reps.find(x=>x.id===S.exportId);
+  const p = S.players.find(x=>x.id===r.pid)||{};
+  const bench = S.bench.filter(b=>b.pid===r.pid);
+  document.getElementById('export-status').innerHTML = '<span style="color:var(--ac)"><i class="ti ti-loader-2"></i> Generating PDF…</span>';
+  document.getElementById('export-dl-btn').disabled = true;
+  // Signal to outer Claude to generate PDF
+  if (typeof sendPrompt === 'function') {
+    sendPrompt('EXPORT_PDF:' + JSON.stringify({report:r, player:p, benchmarks:bench, clubName:S.clubName}));
+  } else {
+    setTimeout(() => {
+      document.getElementById('export-status').innerHTML = '<span style="color:var(--ok)">✓ PDF exported! (Connect to Claude to download)</span>';
+      document.getElementById('export-dl-btn').disabled = false;
+    }, 1500);
+  }
+}
+
+// ── TRYOUTS ──────────────────────────────────────────────────────────
+function rTry() {
+  const filter = document.getElementById('tryf').value;
+  const list = filter==='all' ? S.tries : S.tries.filter(t=>t.status===filter);
+  document.getElementById('apbadge').textContent = S.tries.length;
+  document.getElementById('qr-lbl').textContent = `${S.clubName} — Tryout Sign-Up`;
+  const el = document.getElementById('trylist');
+  if (!list.length) { el.innerHTML='<div class="empty"><i class="ti ti-clipboard-list"></i><p>No applicants match this filter</p></div>'; return; }
+  el.innerHTML = list.map(t => `
+    <div class="trow">
+      <div class="av" style="width:36px;height:36px;font-size:12px;flex-shrink:0">${t.fn[0]}${t.ln[0]}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px">
+          <span style="font-size:13px;font-weight:500">${t.fn} ${t.ln}</span>
+          <span class="pill ${t.status==='approved'?'pg2':t.status==='declined'?'pr':'py'}">${t.status}</span>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:1px">${t.po||'—'} · Age ${t.ag||'?'} · Applied ${t.dt}</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:1px">${t.pa||'—'} · ${t.em||'—'}</div>
+        ${t.ph?`<div style="font-size:11px;color:var(--t3);margin-bottom:1px">${t.ph}</div>`:''}
+        ${t.ex?`<div style="font-size:11px;color:var(--t3);margin-bottom:1px">Experience: ${t.ex}</div>`:''}
+        ${t.no?`<div style="font-size:11px;color:var(--t3);font-style:italic">${t.no}</div>`:''}
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          ${t.status!=='approved'?`<button class="btn ac sm" onclick="setTry(${t.id},'approved')"><i class="ti ti-check"></i>Approve</button>`:''}
+          ${t.status!=='declined'?`<button class="btn danger sm" onclick="setTry(${t.id},'declined')"><i class="ti ti-x"></i>Decline</button>`:''}
+          ${t.status==='approved'?`<button class="btn sm" onclick="tryToRoster(${t.id})"><i class="ti ti-user-plus"></i>Add to roster</button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function setTry(id, s) {
+  S.tries.find(x=>x.id===id).status = s;
+  rTry(); upBadges();
+  saveToCloud();
+  toast(s==='approved' ? 'Applicant approved!' : 'Applicant declined');
+}
+
+function tryToRoster(id) {
+  const t = S.tries.find(x=>x.id===id);
+  if (!t || !confirm(`Add ${t.fn} ${t.ln} to the main roster?`)) return;
+  S.players.push({id:S.nid++,fn:t.fn,ln:t.ln,nu:'',ag:t.ag,po:t.po,em:t.em,ph:t.ph,no:`Tryout: ${t.ex||''}`});
+  S.tries = S.tries.filter(x=>x.id!==id);
+  rTry(); rRoster(); upBadges();
+  saveToCloud();
+  toast(`${t.fn} ${t.ln} added to the roster!`);
+}
+
+function submitTry() {
+  const fn = document.getElementById('tf-fn').value.trim();
+  const ln = document.getElementById('tf-ln').value.trim();
+  const em = document.getElementById('tf-em').value.trim();
+  if (!fn || !ln || !em) { toast('First name, last name and parent email are required','err'); return; }
+  S.tries.unshift({
+    id:S.nid++,fn,ln,ag:document.getElementById('tf-ag').value,
+    po:document.getElementById('tf-po').value,pa:document.getElementById('tf-pa').value,
+    em,ph:document.getElementById('tf-ph').value,
+    ex:document.getElementById('tf-ex').value,no:document.getElementById('tf-no').value,
+    status:'pending',dt:today()
+  });
+  closeDr(); upBadges(); rTry(); rDash();
+  saveToCloud();
+  toast('Application submitted! Coaching staff will be in touch.');
+}
+
+function copyTryLink() {
+  navigator.clipboard?.writeText(`${S.clubName.replace(/\s+/g,'-').toLowerCase()}.app/tryout`).catch(()=>{});
+  toast('Tryout link copied to clipboard','inf');
+}
+
+// ── ROSTER ACTIONS ───────────────────────────────────────────────────
+// ── EDIT PLAYER ───────────────────────────────────────────────────────
+function openEditPlayer() {
+  const p = S.players.find(x=>x.id===S.sel);
+  if (!p) return;
+  document.getElementById('ep-fn').value = p.fn || '';
+  document.getElementById('ep-ln').value = p.ln || '';
+  document.getElementById('ep-nu').value = p.nu || '';
+  document.getElementById('ep-ag').value = p.ag || '';
+  document.getElementById('ep-po').value = p.po || '';
+  document.getElementById('ep-em').value = p.em || '';
+  document.getElementById('ep-ph').value = p.ph || '';
+  document.getElementById('ep-no').value = p.no || '';
+  // swap drawers without closing overlay
+  document.querySelectorAll('.dr').forEach(d=>d.style.display='none');
+  const dr = document.getElementById('dr-ep');
+  dr.style.display='flex'; dr.style.flexDirection='column';
+}
+
+function saveEditPlayer() {
+  const fn = document.getElementById('ep-fn').value.trim();
+  if (!fn) { toast('First name is required','err'); return; }
+  const p = S.players.find(x=>x.id===S.sel);
+  if (!p) return;
+  p.fn = fn;
+  p.ln = document.getElementById('ep-ln').value.trim();
+  p.nu = document.getElementById('ep-nu').value;
+  p.ag = document.getElementById('ep-ag').value;
+  p.po = document.getElementById('ep-po').value;
+  p.em = document.getElementById('ep-em').value.trim();
+  p.ph = document.getElementById('ep-ph').value.trim();
+  p.no = document.getElementById('ep-no').value.trim();
+  toast(`${p.fn} ${p.ln} updated!`);
+  rRoster();
+  upBadges();
+  saveToCloud();
+  // go back to detail view with fresh data
+  openPD(S.sel);
+}
+
+
+function addPlayer() {
+  const fn = document.getElementById('ap-fn').value.trim();
+  if (!fn) { toast('First name is required','err'); return; }
+  S.players.push({
+    id:S.nid++,fn,ln:document.getElementById('ap-ln').value.trim(),
+    nu:document.getElementById('ap-nu').value||'',ag:document.getElementById('ap-ag').value||'',
+    po:document.getElementById('ap-po').value||'',em:document.getElementById('ap-em').value||'',
+    ph:document.getElementById('ap-ph').value||'',no:document.getElementById('ap-no').value||''
+  });
+  closeDr(); upBadges(); rRoster();
+  saveToCloud();
+  toast(`${fn} added to the roster!`);
+}
+
+function rmPlayer() {
+  const p = S.players.find(x=>x.id===S.sel);
+  if (!p || !confirm(`Remove ${p.fn} ${p.ln} from the roster? Their benchmarks and reports will also be removed.`)) return;
+  S.players = S.players.filter(x=>x.id!==S.sel);
+  S.bench = S.bench.filter(x=>x.pid!==S.sel);
+  S.reps = S.reps.filter(x=>x.pid!==S.sel);
+  closeDr(); rRoster(); upBadges();
+  saveToCloud();
+  toast(`${p.fn} ${p.ln} removed from roster`);
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────
+function handleLogo(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = ev => {
+    S.logoUrl = ev.target.result;
+    ['slim','logo-img'].forEach(id => { const el=document.getElementById(id); el.src=ev.target.result; el.style.display='block'; });
+    document.getElementById('slt').style.display = 'none';
+    document.getElementById('logo-txt').style.display = 'none';
+    document.getElementById('slp').style.padding = '0';
+    syncLoginBranding();
+    saveToCloud();
+    toast('Logo updated!');
+  };
+  rd.readAsDataURL(f);
+}
+
+function applyInitials() {
+  const v = document.getElementById('li-in').value.trim() || 'BvB';
+  S.logoTxt = v; S.logoUrl = null;
+  ['logo-txt','slt'].forEach(id => { const el=document.getElementById(id); el.textContent=v; el.style.display=''; });
+  ['logo-img','slim'].forEach(id => document.getElementById(id).style.display='none');
+  document.getElementById('slp').style.padding = '';
+  syncLoginBranding();
+  saveToCloud();
+  toast('Logo initials updated!');
+}
+
+function applyName() {
+  S.clubName = document.getElementById('cn-in').value.trim() || 'BvB Youth Soccer';
+  S.clubSub = document.getElementById('cs-in').value.trim() || 'Team Management';
+  document.getElementById('bn-el').textContent = S.clubName;
+  document.getElementById('bs-el').textContent = S.clubSub;
+  document.getElementById('qr-lbl').textContent = `${S.clubName} — Tryout Sign-Up`;
+  syncLoginBranding();
+  saveToCloud();
+  toast('Club name updated!');
+}
+
+function syncLoginBranding() {
+  document.getElementById('login-title-el').textContent = S.clubName;
+  const txtEl = document.getElementById('login-logo-txt');
+  const logoEl = document.getElementById('login-logo-el');
+  if (S.logoUrl) {
+    logoEl.innerHTML = `<img src="${S.logoUrl}" alt="">`;
+  } else {
+    logoEl.innerHTML = `<span id="login-logo-txt">${S.logoTxt}</span>`;
+  }
+}
+
+function setAc(el) {
+  const c = el.dataset.c, ac3 = el.dataset.ac3;
+  S.accent = c;
+  document.documentElement.style.setProperty('--ac', c);
+  document.documentElement.style.setProperty('--ac3', ac3 || 'rgba(255,215,0,.12)');
+  document.documentElement.style.setProperty('--ac2', el.dataset.dim || c);
+  document.querySelectorAll('.csw').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('logo-el').style.background = c;
+  document.getElementById('slp').style.background = c;
+  const br = parseInt(c.slice(1,3),16)*.299 + parseInt(c.slice(3,5),16)*.587 + parseInt(c.slice(5,7),16)*.114;
+  const tc = br > 128 ? '#111' : '#fff';
+  ['logo-txt','slt'].forEach(id => { const el=document.getElementById(id); if(el){el.style.color=tc;} });
+  toast('Accent color updated!');
+}
+
+function rActList() {
+  document.getElementById('act-list').innerHTML = S.acts.map(a => {
+    if (S.editingActId === a.id) {
+      return `<div class="ai editing">
+        <i class="ti ${a.ic}" style="color:var(--ac);font-size:14px"></i>
+        <input class="ai-name-input" id="ai-edit-name" value="${a.nm.replace(/"/g,'&quot;')}" placeholder="Activity name">
+        <input class="ai-unit-input" id="ai-edit-unit" value="${a.un.replace(/"/g,'&quot;')}" placeholder="Unit">
+        <button class="aedit" onclick="saveActEdit('${a.id}')" title="Save"><i class="ti ti-check" style="color:var(--ok)"></i></button>
+        <button class="aedit" onclick="cancelActEdit()" title="Cancel"><i class="ti ti-x"></i></button>
+      </div>`;
+    }
+    return `<div class="ai">
+      <i class="ti ${a.ic}" style="color:var(--ac);font-size:14px"></i>
+      <span class="aname">${a.nm}</span>
+      <span class="aunit">${a.un}</span>
+      <button class="aedit" onclick="editActStart('${a.id}')" title="Edit"><i class="ti ti-pencil"></i></button>
+      ${a.id!=='cust' ? `<button class="adel" onclick="delAct('${a.id}')" title="Remove"><i class="ti ti-x"></i></button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function editActStart(id) {
+  S.editingActId = id;
+  rActList();
+  const nameInput = document.getElementById('ai-edit-name');
+  if (nameInput) { nameInput.focus(); nameInput.select(); }
+}
+
+function cancelActEdit() {
+  S.editingActId = null;
+  rActList();
+}
+
+function saveActEdit(id) {
+  const nm = document.getElementById('ai-edit-name').value.trim();
+  const un = document.getElementById('ai-edit-unit').value.trim();
+  if (!nm) { toast('Activity name cannot be empty','err'); return; }
+  const a = S.acts.find(x=>x.id===id);
+  if (!a) return;
+  a.nm = nm;
+  a.un = un;
+  S.editingActId = null;
+  rActList(); buildBTabs(); rBench();
+  saveToCloud();
+  toast(`"${nm}" updated!`);
+}
+
+function delAct(id) {
+  if (!confirm('Remove this activity? Logged benchmarks using it will still be kept.')) return;
+  S.acts = S.acts.filter(a=>a.id!==id);
+  rActList(); buildBTabs(); rBench();
+  saveToCloud();
+  toast('Activity removed');
+}
+
+function addAct() {
+  const nm = document.getElementById('na-name').value.trim();
+  const un = document.getElementById('na-unit').value.trim();
+  if (!nm) { toast('Enter an activity name','err'); return; }
+  S.acts.splice(S.acts.length-1, 0, {id:'a'+S.nid++, nm, ic:'ti-chart-bar', un});
+  document.getElementById('na-name').value = '';
+  document.getElementById('na-unit').value = '';
+  rActList();
+  saveToCloud();
+  toast(`"${nm}" added to activities!`);
+}
+
+// ── QR CODE ──────────────────────────────────────────────────────────
+function genQR() {
+  const c = document.getElementById('qrc');
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,110,110);
+  ctx.fillStyle = '#1a1a1a';
+  const d = [[0,0,7,7],[9,0,3,1],[13,0,1,1],[15,0,5,1],[9,2,5,1],[15,2,1,1],[9,3,1,3],[11,3,3,1],[15,3,1,1],[13,4,3,1],[9,5,7,1],[11,6,1,1],[13,6,3,1],[0,9,1,3],[2,9,3,1],[6,9,1,1],[8,9,5,1],[14,9,1,5],[16,9,3,1],[0,10,5,1],[6,10,2,1],[9,10,3,1],[13,10,1,1],[16,11,2,1],[1,11,1,1],[3,11,3,1],[7,11,7,1],[0,12,3,1],[5,12,3,1],[9,12,5,1],[16,12,3,1],[1,13,3,1],[6,13,2,1],[9,13,3,1],[14,13,5,1],[0,14,5,1],[7,14,3,1],[11,14,3,1],[16,14,2,1],[1,15,1,1],[3,15,3,1],[7,15,1,1],[9,15,5,1],[0,16,1,5],[2,16,5,1],[8,16,4,1],[13,16,6,1],[0,18,3,1],[6,18,2,1],[9,18,2,1],[12,18,5,1],[1,19,3,1],[5,19,1,1],[8,19,3,1],[12,19,7,1],[2,20,3,1],[7,20,5,1],[13,20,5,1]];
+  const sz = 4;
+  d.forEach(([x,y,w,h]) => ctx.fillRect(x*sz+7, y*sz+7, w*sz, h*sz));
+  ctx.fillStyle = '#FFD700';
+  ctx.font = 'bold 8px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('BvB', 55, 107);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+genQR();
+rRoster();
+upBadges();
+initCloud();
+checkAuth();
+
+// ── PWA: register service worker ────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
