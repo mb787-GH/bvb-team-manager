@@ -40,7 +40,7 @@ bvb-team-manager/
 
 The app is locked behind a single shared team password before anyone can see the roster, reports, etc.
 
-**Default password:** `bvb2024`
+**Default password:** `test`
 
 ### To change the password:
 1. Open `index.html` in a text editor (or ask Claude to do this for you)
